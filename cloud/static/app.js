@@ -1,5 +1,9 @@
 "use strict";
-const CLOUD_SERVER_URL = "https://speakapp-w80v.onrender.com";
+
+const CLOUD_SERVER_URL = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? window.location.origin
+  : "https://speakapp-w80v.onrender.com";
+
 const speakers = [
   { name: "Winston Churchill", field: "Politics, leadership & civil rights", strategy: "Metered, rhythmic pacing and concise, forceful language." },
   { name: "Martin Luther King Jr.", field: "Politics, leadership & civil rights", strategy: "Prophetic cadence, musical repetition, and resonant metaphor." },
@@ -342,7 +346,7 @@ async function checkCloudService() {
   const pill = byId("connection-status");
   const label = byId("connection-label");
   try {
-    const response = await fetch("/api/status");
+    const response = await fetch(`${CLOUD_SERVER_URL}/api/status`);
     const status = await response.json();
     state.models = status.cloud_available && typeof status.model === "string" ? [status.model] : [];
     if (!status.cloud_available) {
@@ -425,7 +429,7 @@ async function generateSpeech() {
       renderScript(state.script);
       byId("script-length").textContent = `About ${event.word_count} spoken words · target ${state.duration * 130}`;
     } else if (event.type === "error") {
-      throw new Error(event.error || "Local speech generation failed.");
+      throw new Error(event.error || "Cloud speech generation failed.");
     }
   };
   const payload = {
@@ -441,7 +445,7 @@ async function generateSpeech() {
     secondary_speaker: state.secondary ? { name: state.secondary.name, field: state.secondary.field, strategy: state.secondary.strategy } : null
   };
   try {
-    const response = await fetch("/api/generate", {
+    const response = await fetch(`${CLOUD_SERVER_URL}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -449,7 +453,7 @@ async function generateSpeech() {
     });
     if (!response.ok) {
       const result = await response.json();
-      throw new Error(result.error || `Local generation failed (${response.status}).`);
+      throw new Error(result.error || `Cloud generation failed (${response.status}).`);
     }
     if (!response.body) throw new Error("This browser cannot display the live response. Please update your browser and retry.");
     const reader = response.body.getReader();
