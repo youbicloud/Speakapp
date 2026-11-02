@@ -10,6 +10,7 @@ import urllib.request
 from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from flask import Flask, Response, jsonify, request, send_from_directory, stream_with_context
 from werkzeug.exceptions import BadRequest
@@ -18,6 +19,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 APP_DIR = Path(__file__).resolve().parent
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+PUBLIC_API_ORIGIN = "https://speakapp-w80v.onrender.com"
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 MIN_DURATION = 1
 MAX_DURATION = 60
@@ -56,15 +58,51 @@ def set_security_headers(response: Response) -> Response:
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+        f"img-src 'self' data:; connect-src 'self' {PUBLIC_API_ORIGIN}; object-src 'none'; "
         "base-uri 'self'; frame-ancestors 'none'"
     )
+    origin = request.headers.get("Origin", "")
+    if is_allowed_frontend_origin(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.vary.add("Origin")
     return response
+
+
+def is_allowed_frontend_origin(origin: str) -> bool:
+    if not origin:
+        return False
+    try:
+        parsed = urlsplit(origin)
+        hostname = (parsed.hostname or "").lower()
+        port = parsed.port
+    except ValueError:
+        return False
+    if parsed.scheme != "https" or not hostname or parsed.path not in {"", "/"} or parsed.query or parsed.fragment:
+        return False
+    if parsed.username or parsed.password:
+        return False
+    if hostname.endswith(".github.io") and port is None:
+        return True
+    configured_origins = {
+        item.strip().rstrip("/")
+        for item in os.environ.get("FRONTEND_ORIGINS", "").split(",")
+        if item.strip()
+    }
+    return origin.rstrip("/") in configured_origins
 
 
 @app.get("/")
 def home():
     return send_from_directory(app.static_folder, "index.html")
+
+
+@app.get("/app.js")
+@app.get("/icon.svg")
+@app.get("/manifest.json")
+def frontend_asset():
+    return send_from_directory(app.static_folder, request.path.lstrip("/"))
 
 
 @app.get("/favicon.ico")
