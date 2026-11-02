@@ -1,5 +1,5 @@
 "use strict";
-
+const CLOUD_SERVER_URL = "https://speakapp-w80v.onrender.com";
 const speakers = [
   { name: "Winston Churchill", field: "Politics, leadership & civil rights", strategy: "Metered, rhythmic pacing and concise, forceful language." },
   { name: "Martin Luther King Jr.", field: "Politics, leadership & civil rights", strategy: "Prophetic cadence, musical repetition, and resonant metaphor." },
