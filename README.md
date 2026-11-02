@@ -1,28 +1,39 @@
-# Speakapp
+# Speakapp Cloud
 
-Speakapp is a local speech-writing app that turns rough notes, facts, stories, and examples into a structured talk. It uses Python's standard library and a local Ollama model; it does not use a paid API, cloud model, or external frontend assets.
+This is a separately deployable, mobile-friendly cloud edition. It does not import, replace, or change the personal Ollama app in the parent folder. Its static frontend can be published on GitHub Pages, while the Python backend on Render sends speech requests to Groq; the provider key stays on the server.
 
-## Run it
+## Secure the provider key
 
-1. Make sure Ollama is running and that the model you want to use is already installed locally (for example, `llama3`).
-2. From this folder, run `py server.py` in PowerShell. If your Python launcher uses another command, run `python server.py`.
-3. Open `http://127.0.0.1:8000` in your browser.
+If a Groq API key has been pasted into a chat, issue, source file, or other shared location, revoke it in the Groq console and create a replacement. Never paste an API key into the website, source code, GitHub, or this conversation. Add the replacement only in the Render dashboard under the service's **Environment** settings as `GROQ_API_KEY`.
 
-The app is bound to `127.0.0.1`; speech inputs are sent only to Ollama at `127.0.0.1:11434`. No additional Python packages are needed. A model must be downloaded before going offline; downloading a model for the first time requires an internet connection.
+## Publish the phone-friendly frontend with GitHub Pages
 
-## Flow
+The repository includes a GitHub Actions workflow that publishes only `cloud/static/`, keeping the offline app and Python source out of the Pages site.
 
-1. Choose 1, 3, 5, 8, 10, 15, or 30 minutes, a 1-hour talk, or enter a custom whole number from 1 to 60 minutes. Longer talks can take substantially more time and computing resources on your laptop.
-2. Select a primary speaker's rhetorical technique and, optionally, a secondary technique.
-3. Add a topic, audience, takeaway, and any raw notes. Optional mind-map pillars help organize larger sets of ideas.
-4. Generate, copy, or download the speech.
+1. Push the repository to GitHub with the workflow at `.github/workflows/deploy-pages.yml`.
+2. In the repository's **Settings → Pages**, choose **GitHub Actions** as the build and deployment source.
+3. Push to the `main` branch (or run **Deploy Speakapp phone app** from the Actions tab). The workflow publishes the phone frontend; GitHub displays its URL in the Pages settings and deployment.
+4. Open that Pages URL on your phone. The frontend connects to `https://speakapp-w80v.onrender.com`; no API key is put in the Pages files.
 
-The topic, audience, takeaway, notes, and optional pillar fields use your browser's built-in spellcheck. Underlines and suggestions depend on your browser's spelling settings; Speakapp does not send text to an online grammar service.
+The Render backend must be updated with the current `cloud/app.py` so it allows the Pages site's cross-origin requests. GitHub Pages origins ending in `.github.io` are allowed. If you use a custom domain, add its HTTPS origin (for example `https://talk.example.com`, without a path) to the Render service's `FRONTEND_ORIGINS` environment variable.
 
-The speaker collection is used to select high-level rhetorical methods, not to reproduce any speaker's exact voice or wording.
+## Render backend
 
-## If generation seems slow
+The live backend is `https://speakapp-w80v.onrender.com`. To deploy or update it from this repository, push the `cloud/` folder and root `render.yaml`, then connect the repository through Render's Blueprint flow. Set `GROQ_API_KEY` only in the Render service's **Environment** settings. Never commit or share the key.
 
-Speech generation runs locally, so its speed depends on your computer and the installed Ollama model. The first response can take longer while the model loads. The app streams generated text and progress into the browser; if no text appears after several minutes, use **Cancel**, check that Ollama is running, and retry with a shorter speech.
+A free Render service can sleep while idle and take extra time to wake; Groq's model access and free-plan quotas are separate and can change. If a provider limit is reached, the app displays a retry message.
 
-The command prompt writes the `POST /api/generate` access log only after that request finishes. Not seeing that line while generation is running is expected. A `404` for `/favicon.ico` is harmless and unrelated.
+## Local cloud-edition smoke test
+
+```powershell
+cd cloud
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+$env:GROQ_API_KEY = "your-new-key"
+py app.py
+```
+
+Open `http://127.0.0.1:8000`. This is only for testing the cloud edition; it does not start or configure the personal Ollama app.
+
+The public endpoint applies small in-memory request limits to reduce accidental use of the shared free quota. The app does not intentionally save speech inputs. A public free service cannot promise unlimited or always-on use.

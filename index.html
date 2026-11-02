@@ -7,7 +7,7 @@
   <meta name="application-name" content="Speakapp">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="manifest" href="./manifest.json">
-  <title>Speakapp — turn your ideas into a talk</title>
+  <title>Speakapp Cloud — turn your ideas into a talk</title>
   <style>
     :root {
       color-scheme: light;
@@ -32,7 +32,7 @@
 
     * { box-sizing: border-box; }
     body {
-      min-width: 320px;
+      min-width: 0;
       min-height: 100vh;
       margin: 0;
       color: var(--ink);
@@ -157,7 +157,8 @@
     .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; clip-path: inset(50%); }
     @media (max-width: 740px) {
       .shell { width: min(100% - 26px, 640px); padding-top: 16px; }
-      .topbar { margin-bottom: 22px; }
+      .topbar { flex-wrap: wrap; margin-bottom: 22px; }
+      .offline-pill { margin-left: auto; }
       .welcome-card { grid-template-columns: 1fr; }
       .welcome-copy { padding: 38px 28px 32px; }
       .welcome-art { min-height: 315px; }
@@ -193,7 +194,7 @@
       <div class="brand"><img class="brand-mark" src="./icon.svg" alt="" aria-hidden="true"> Speakapp</div>
       <div class="offline-pill" id="connection-status" role="status" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
-        <span id="connection-label">Checking local Ollama…</span>
+        <span id="connection-label">Connecting to cloud AI…</span>
       </div>
     </header>
 
@@ -253,7 +254,7 @@
           </div>
           <button class="button" type="button" id="custom-duration-apply" disabled>Use this length <span class="arrow" aria-hidden="true">→</span></button>
         </div>
-        <p class="duration-custom-note" id="custom-duration-note">Enter a whole number from 1 to 60 minutes. Longer speeches may take considerably more time and computing resources on your laptop.</p>
+        <p class="duration-custom-note" id="custom-duration-note">Enter a whole number from 1 to 60 minutes. Longer speeches may take more time and AI processing.</p>
       </section>
       <div class="bottom-actions">
         <button class="button secondary" type="button" data-go="1"><span class="arrow" aria-hidden="true">←</span> Back</button>
@@ -333,10 +334,10 @@
         <div class="loading" id="loading" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="loading-label">Your ideas are coming together…</span><button class="button ghost small" type="button" id="cancel-generation">Cancel</button></div>
         <div class="bottom-actions">
           <button class="button secondary" type="button" data-go="3"><span class="arrow" aria-hidden="true">←</span> Back</button>
-          <p class="hint" id="model-hint">Your material stays on this device and is sent only to your local Ollama model.</p>
+          <p class="hint" id="model-hint">Your notes are sent securely to the configured cloud AI provider to write the speech.</p>
           <button class="button" type="button" id="generate-button">Write my speech <span class="arrow" aria-hidden="true">→</span></button>
         </div>
-        <p class="fine-print">No cloud AI, account, subscription, or paid API. Generation requires Ollama running locally with a model already installed.</p>
+        <p class="fine-print">Cloud edition: speech requests are sent securely to Groq. This public free service applies request limits and may sleep when idle.</p>
 
         <section class="output-panel" id="output-panel" aria-labelledby="output-title">
           <div class="output-toolbar">
@@ -351,6 +352,6 @@
       </div>
     </section>
   </main>
-  <script src="app.js" defer></script>
+  <script src="./app.js" defer></script>
 </body>
 </html>

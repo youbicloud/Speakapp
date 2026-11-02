@@ -1,5 +1,9 @@
 "use strict";
 
+const API_BASE_URL = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? window.location.origin
+  : "https://speakapp-w80v.onrender.com";
+
 const speakers = [
   { name: "Winston Churchill", field: "Politics, leadership & civil rights", strategy: "Metered, rhythmic pacing and concise, forceful language." },
   { name: "Martin Luther King Jr.", field: "Politics, leadership & civil rights", strategy: "Prophetic cadence, musical repetition, and resonant metaphor." },
@@ -338,30 +342,27 @@ function updateFlow() {
 
 ["topic", "thesis", "raw-notes"].forEach((id) => byId(id).addEventListener("input", updateFlow));
 
-async function checkLocalOllama() {
+async function checkCloudService() {
   const pill = byId("connection-status");
   const label = byId("connection-label");
   try {
-    const response = await fetch("/api/status");
+    const response = await fetch(`${API_BASE_URL}/api/status`);
     const status = await response.json();
-    state.models = Array.isArray(status.models) ? status.models : [];
-    if (!status.ollama_available) {
+    state.models = status.cloud_available && typeof status.model === "string" ? [status.model] : [];
+    if (!status.cloud_available) {
       pill.classList.add("error");
-      label.textContent = "Ollama not running";
-      byId("model-hint").textContent = status.message || "Start Ollama locally to write your speech.";
+      label.textContent = "Cloud AI not configured";
+      byId("model-hint").textContent = status.message || "The site owner needs to configure the cloud AI provider.";
       return;
     }
     pill.classList.add("online");
-    const preferred = state.models.find((model) => model === "llama3" || model.startsWith("llama3:"));
-    state.model = preferred || state.models[0] || "llama3";
-    label.textContent = state.models.length ? `Local · ${state.models.length} model${state.models.length === 1 ? "" : "s"}` : "Ollama connected · no model found";
-    byId("model-hint").textContent = state.models.length
-      ? `Using ${state.model}. Your material is sent only to Ollama on this device.`
-      : "Ollama is running, but no local model is installed. Install a model before generating.";
+    state.model = state.models[0];
+    label.textContent = `Cloud AI · ${status.provider || "ready"}`;
+    byId("model-hint").textContent = `Using ${state.model}. Your notes are sent securely to ${status.provider || "the cloud AI provider"} for generation.`;
   } catch (error) {
     pill.classList.add("error");
-    label.textContent = "Local server unavailable";
-    byId("model-hint").textContent = "Start the app with Python and make sure Ollama is running locally.";
+    label.textContent = "Cloud service unavailable";
+    byId("model-hint").textContent = "The cloud service could not be reached. Refresh the page or try again later.";
   }
 }
 
@@ -378,7 +379,7 @@ function validateForm() {
   if (!state.duration) return "Choose a speech length first.";
   if (!topic) return "Add a topic so the speech has a clear center.";
   if (!rawNotes && getPillars().length === 0) return "Add some notes or at least one speech pillar to build from.";
-  if (!state.models.length) return "No local Ollama model is available. Start Ollama and make sure a model is installed, then restart this app.";
+  if (!state.models.length) return "Cloud AI is not configured. Please try again later.";
   return "";
 }
 
@@ -396,7 +397,7 @@ async function generateSpeech() {
   byId("generate-button").disabled = true;
   byId("loading").classList.add("visible");
   byId("output-panel").classList.add("visible");
-  byId("loading-label").textContent = "Connecting to your local model…";
+  byId("loading-label").textContent = "Connecting securely to cloud AI…";
   generationController = new AbortController();
   const startedAt = Date.now();
   let liveScript = "";
@@ -404,7 +405,7 @@ async function generateSpeech() {
   const timer = window.setInterval(() => {
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     if (elapsed >= 20 && !liveScript) {
-      byId("loading-label").textContent = `Waiting for the local model to start · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} elapsed`;
+      byId("loading-label").textContent = `Waiting for the cloud service or AI model · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} elapsed`;
     }
   }, 1000);
   const handleEvent = (event) => {
@@ -428,7 +429,7 @@ async function generateSpeech() {
       renderScript(state.script);
       byId("script-length").textContent = `About ${event.word_count} spoken words · target ${state.duration * 130}`;
     } else if (event.type === "error") {
-      throw new Error(event.error || "Local speech generation failed.");
+      throw new Error(event.error || "Cloud speech generation failed.");
     }
   };
   const payload = {
@@ -444,7 +445,7 @@ async function generateSpeech() {
     secondary_speaker: state.secondary ? { name: state.secondary.name, field: state.secondary.field, strategy: state.secondary.strategy } : null
   };
   try {
-    const response = await fetch("/api/generate", {
+    const response = await fetch(`${API_BASE_URL}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -452,7 +453,7 @@ async function generateSpeech() {
     });
     if (!response.ok) {
       const result = await response.json();
-      throw new Error(result.error || `Local generation failed (${response.status}).`);
+      throw new Error(result.error || `Cloud generation failed (${response.status}).`);
     }
     if (!response.body) throw new Error("This browser cannot display the live response. Please update your browser and retry.");
     const reader = response.body.getReader();
@@ -469,14 +470,14 @@ async function generateSpeech() {
       if (done) break;
     }
     if (buffer.trim()) handleEvent(JSON.parse(buffer));
-    if (!completed) throw new Error("The connection ended before Ollama finished the speech. Try again.");
+    if (!completed) throw new Error("The connection ended before cloud AI finished the speech. Try again.");
     byId("output-panel").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (generationError) {
     if (generationError.name === "AbortError") {
       byId("loading-label").textContent = "Generation cancelled.";
       if (!liveScript) byId("output-panel").classList.remove("visible");
     } else {
-      error.textContent = generationError.message || "Could not generate the speech. Check that Ollama is running and try again.";
+      error.textContent = generationError.message || "Could not generate the speech. Please check your connection and try again.";
       error.classList.add("visible");
     }
   } finally {
@@ -529,4 +530,4 @@ byId("download-button").addEventListener("click", () => {
 
 renderDurations();
 populateSpeakers();
-checkLocalOllama();
+checkCloudService();
