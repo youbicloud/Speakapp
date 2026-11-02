@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Speakapp quill and conversation icon</title>
+  <defs>
+    <linearGradient id="background" x1="15" y1="8" x2="112" y2="122" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#427762"/>
+      <stop offset="1" stop-color="#1f493c"/>
+    </linearGradient>
+    <linearGradient id="feather" x1="42" y1="24" x2="93" y2="77" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff5d8"/>
+      <stop offset=".58" stop-color="#e6c982"/>
+      <stop offset="1" stop-color="#c4934e"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="33" y1="39" x2="98" y2="103" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffe8ab"/>
+      <stop offset="1" stop-color="#d8ae68"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="33" fill="url(#background)"/>
+  <path d="M37 78v12c0 5 4 9 9 9h33l17 12V99h2c5 0 9-4 9-9V63c0-5-4-9-9-9H76" fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M51 79h42M51 91h25" fill="none" stroke="#fff8e6" stroke-linecap="round" stroke-width="4"/>
+  <path d="M38 81c3-16 13-38 37-54 9-6 19-9 27-9-1 8-4 17-11 25-16 18-34 31-53 40Z" fill="url(#feather)" stroke="#fff1c8" stroke-linejoin="round" stroke-width="2.5"/>
+  <path d="M38 81c17-17 35-33 57-55M58 62l-8-17m21 3-3-17m-3 40-19-2m33-15 12 2" fill="none" stroke="#9c7542" stroke-linecap="round" stroke-width="2"/>
+  <path d="m38 81-9 18 18-9" fill="#f3d996" stroke="#fff0bd" stroke-linejoin="round" stroke-width="2"/>
+  <circle cx="31" cy="106" r="3" fill="#f1cc7d"/>
+</svg>
